@@ -82,27 +82,27 @@ module "ecr" {
 }
 
 # Provision S3 for frontend static web-hosting
-module "s3_bucket" {
-  source = "terraform-aws-modules/s3-bucket/aws"
+# module "s3_bucket" {
+#   source = "terraform-aws-modules/s3-bucket/aws"
 
-  bucket = "networth-tracker-frontend"
-  acl    = "private"
+#   bucket = "networth-tracker-frontend"
+#   acl    = "private"
 
-  control_object_ownership = true
-  object_ownership         = "ObjectWriter"
+#   control_object_ownership = true
+#   object_ownership         = "ObjectWriter"
 
-  versioning = {
-    enabled = true
-  }
+#   versioning = {
+#     enabled = true
+#   }
 
-  website = {
-    index_document = ""
-    error_document = ""
-    routing_rules = [{}]
-  }
+#   website = {
+#     index_document = ""
+#     error_document = ""
+#     routing_rules = [{}]
+#   }
 
-  tags = {
-    Terraform = "true"
-  }
-}
+#   tags = {
+#     Terraform = "true"
+#   }
+# }
 

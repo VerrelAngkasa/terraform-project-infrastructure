@@ -23,3 +23,7 @@ provider aws {
 module storage {
     source = "../../modules/storage"
 }
+
+module compute {
+    source = "../../modules/compute"
+}
