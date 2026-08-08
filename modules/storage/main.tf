@@ -7,9 +7,9 @@ resource "aws_iam_user" "github_actions" {
   }
 }
 
-# resource "aws_iam_access_key" "github_actions_key" {
-#   user = aws_iam_user.github_actions.name
-# }
+resource "aws_iam_access_key" "github_actions_key" {
+  user = aws_iam_user.github_actions.name
+}
 
 resource "aws_iam_policy" "github_actions_policy" {
   name = "github-actions-policy"
@@ -19,9 +19,21 @@ resource "aws_iam_policy" "github_actions_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
+      Sid       = "AllowECRLogin"
+      Effect    = "Allow"
+      Action    = [ "ecr:GetAuthorizationToken" ]
+      Resource  = "*"
+    }, 
+    {
       Sid       = "AllowECRAccess"
       Effect    = "Allow"
-      Action    = [ "ecr:*" ]
+      Action    = [ "ecr:InitiateLayerUpload",
+                    "ecr:UploadLayerPart",
+                    "ecr:CompleteLayerUpload",
+                    "ecr:PutImage",
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer" ]
       Resource  = module.ecr.repository_arn
     }]
   })
@@ -41,7 +53,7 @@ resource "aws_iam_user_policy_attachment" "github_actions_policy_attachment" {
 module "ecr" {
   source = "terraform-aws-modules/ecr/aws"
 
-  repository_name = "mynetworth-tracker"
+  repository_name = "net-worth-tracker-gueh"
 
   repository_read_write_access_arns = [resource.aws_iam_user.github_actions.arn]
   repository_lifecycle_policy = jsonencode({
