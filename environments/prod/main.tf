@@ -26,4 +26,10 @@ module storage {
 
 module compute {
     source = "../../modules/compute"
+
+    backend_port          = var.backend_port
+    backend_jwt_secret    = var.backend_jwt_secret
+    backend_node_env      = var.backend_node_env
+    backend_database_url  = var.backend_database_url
+    backend_client_origin = var.backend_client_origin
 }
