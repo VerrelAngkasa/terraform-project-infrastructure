@@ -6,5 +6,4 @@ output "iam_access_key_id" {
 output "iam_secret_access_key" {
     value     = aws_iam_access_key.github_actions_key.secret
     sensitive = true
-    description = "The AWS IAM secret key for the github actions pipeline"
 }

@@ -1,6 +1,6 @@
 locals {
   name                  = "networth-tracker-backend"
-  image_uri             = "125905898704.dkr.ecr.ap-southeast-1.amazonaws.com/mynetworth-tracker:be-latest"
+  image_uri             = "125905898704.dkr.ecr.ap-southeast-1.amazonaws.com/net-worth-tracker-gueh:be-latest"
 
   backend_port          = var.backend_port
   backend_jwt_secret    = var.backend_jwt_secret
@@ -22,7 +22,7 @@ module "lambda_backend" {
   image_uri    = local.image_uri
 
   memory_size = 512
-  timeout     = 15
+  timeout     = 60
 
   environment_variables = {
     PORT          = local.backend_port
@@ -45,7 +45,7 @@ resource "aws_lambda_function_url" "backend_url" {
   cors {
     allow_credentials = true
     allow_origins     = [local.backend_client_origin]
-    allow_methods     = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_methods     = ["*"]
     allow_headers     = ["Content-Type", "Authorization"]
     max_age           = 86400
   }
