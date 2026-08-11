@@ -1,5 +1,5 @@
 locals {
-  name                  = "networth-tracker-backend"
+  backend_name          = "networth-tracker-backend"
   image_uri             = "125905898704.dkr.ecr.ap-southeast-1.amazonaws.com/net-worth-tracker-gueh:be-latest"
 
   backend_port          = var.backend_port
@@ -9,10 +9,11 @@ locals {
   backend_client_origin = var.backend_client_origin
 }
 
+# Provision AWS Lambda function for hosting backend API
 module "lambda_backend" {
   source = "terraform-aws-modules/lambda/aws"
 
-  function_name = local.name
+  function_name = local.backend_name
   description   = "My awesome backend lambda function"
 
   create_package = false
