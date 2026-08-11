@@ -17,7 +17,7 @@ variable "backend_jwt_secret" {
 variable "backend_node_env" {
     type        = string
     description = "Node environment for backend"
-    default     = "development"
+    default     = "production"
 }
 
 variable "backend_database_url" {

@@ -35,6 +35,12 @@ resource "aws_iam_policy" "github_actions_policy" {
                     "ecr:BatchGetImage",
                     "ecr:GetDownloadUrlForLayer" ]
       Resource  = module.ecr.repository_arn
+    },
+    {
+      Sid       = "AllowLambdaImageUpdate"
+      Effect    = "Allow"
+      Action    = [ "lambda:UpdateFunctionCode" ]
+      Resource  = var.lambda_backend_arn
     }]
   })
 
@@ -94,27 +100,33 @@ module "ecr" {
 }
 
 # Provision S3 for frontend static web-hosting
-# module "s3_bucket" {
-#   source = "terraform-aws-modules/s3-bucket/aws"
+# locals {
+#   frontend_bucket_name = "networth-tracker-frontend"
+# }
 
-#   bucket = "networth-tracker-frontend"
-#   acl    = "private"
+# resource "aws_s3_bucket_website_configuration" "example" {
+#   bucket = local.frontend_bucket_name
 
-#   control_object_ownership = true
-#   object_ownership         = "ObjectWriter"
-
-#   versioning = {
-#     enabled = true
+#   index_document {
+#     suffix = "index.html"
 #   }
 
-#   website = {
-#     index_document = ""
-#     error_document = ""
-#     routing_rules = [{}]
+#   error_document {
+#     key = "error.html"
 #   }
 
+#   routing_rule {
+#     condition {
+#       key_prefix_equals = "docs/"
+#     }
+#     redirect {
+#       replace_key_prefix_with = "documents/"
+#     }
+#   }
+  
 #   tags = {
-#     Terraform = "true"
+#     Terraform   = "true"
+#     Environment = "prod"
 #   }
 # }
 

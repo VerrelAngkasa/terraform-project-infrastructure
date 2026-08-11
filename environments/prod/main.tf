@@ -22,6 +22,8 @@ provider aws {
 
 module storage {
     source = "../../modules/storage"
+
+    lambda_backend_arn = module.compute.lambda_backend_arn
 }
 
 module compute {
