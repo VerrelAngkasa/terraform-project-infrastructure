@@ -7,3 +7,7 @@ output "iam_secret_access_key" {
     value     = aws_iam_access_key.github_actions_key.secret
     sensitive = true
 }
+
+output "ecr_repository_arn" {
+    value = module.ecr.repository_arn
+}

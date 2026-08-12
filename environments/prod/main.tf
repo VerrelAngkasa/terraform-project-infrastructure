@@ -24,10 +24,14 @@ module storage {
     source = "../../modules/storage"
 
     lambda_backend_arn = module.compute.lambda_backend_arn
+
+    networth_backend_exec_role = module.compute.networth_backend_exec_role
 }
 
 module compute {
     source = "../../modules/compute"
+
+    ecr_repository_arn    = module.storage.ecr_repository_arn
 
     backend_port          = var.backend_port
     backend_jwt_secret    = var.backend_jwt_secret

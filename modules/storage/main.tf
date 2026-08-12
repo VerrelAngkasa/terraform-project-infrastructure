@@ -14,7 +14,7 @@ resource "aws_iam_access_key" "github_actions_key" {
 resource "aws_iam_policy" "github_actions_policy" {
   name = "github-actions-policy"
   path = "/"
-  description = "Policy for github actions to access ECR repository"
+  description = "Policy for GitHub actions to access ECR repository and update Lambda image tag version"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -31,9 +31,8 @@ resource "aws_iam_policy" "github_actions_policy" {
                     "ecr:UploadLayerPart",
                     "ecr:CompleteLayerUpload",
                     "ecr:PutImage",
-                    "ecr:BatchCheckLayerAvailability",
                     "ecr:BatchGetImage",
-                    "ecr:GetDownloadUrlForLayer" ]
+                    "ecr:BatchCheckLayerAvailability" ]
       Resource  = module.ecr.repository_arn
     },
     {
@@ -61,7 +60,8 @@ module "ecr" {
 
   repository_name = "net-worth-tracker-gueh"
 
-  repository_read_write_access_arns = [resource.aws_iam_user.github_actions.arn]
+  repository_read_write_access_arns = [ aws_iam_user.github_actions.arn ]
+  repository_read_access_arns       = [ var.networth_backend_exec_role ]
   repository_lifecycle_policy = jsonencode({
     rules = [
       {

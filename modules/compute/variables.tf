@@ -17,3 +17,7 @@ variable "backend_database_url" {
 variable "backend_client_origin" {
     type = string
 }
+
+variable "ecr_repository_arn" {
+    type = string
+}

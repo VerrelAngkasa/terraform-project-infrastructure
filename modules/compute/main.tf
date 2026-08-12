@@ -10,6 +10,52 @@ locals {
 }
 
 # Provision AWS Lambda function for hosting backend API
+resource "aws_iam_role" "networth_backend_exec_role" {
+  name = "networth_backend_exec_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = "sts:AssumeRole"
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_policy" "networth_backend_policy" {
+  name = "networth_backend_policy"
+  path = "/"
+  description = "Policy for Lambda to stream logs and pull ECR image"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "AllowCloudWatchAccess"
+      Effect    = "Allow"
+      Action    = [ "logs:PutLogEvents",
+                    "logs:CreateLogStream",
+                    "logs:CreateLogGroup" ]
+      Resource  = "arn:aws:logs:*:*:*"
+    },
+    {
+      Sid       = "AllowECRPull"
+      Effect    = "Allow"
+      Action    = [ "ecr:BatchCheckLayerAvailability",
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer" ]
+      Resource  = var.ecr_repository_arn
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "networth_backend_role_attachment" {
+  role      = aws_iam_role.networth_backend_exec_role.name
+  policy_arn = aws_iam_policy.networth_backend_policy.arn
+}
+
 module "lambda_backend" {
   source = "terraform-aws-modules/lambda/aws"
 
@@ -25,6 +71,9 @@ module "lambda_backend" {
   memory_size = 512
   timeout     = 60
 
+  create_role = false
+  lambda_role = aws_iam_role.networth_backend_exec_role.arn
+
   environment_variables = {
     PORT          = local.backend_port
     JWT_SECRET    = local.backend_jwt_secret
@@ -32,6 +81,8 @@ module "lambda_backend" {
     DATABASE_URL  = local.backend_database_url
     CLIENT_ORIGIN = local.backend_client_origin
   }
+
+  depends_on = [ aws_iam_role_policy_attachment.networth_backend_role_attachment ]
 
   tags = {
     Terraform   = "true"
