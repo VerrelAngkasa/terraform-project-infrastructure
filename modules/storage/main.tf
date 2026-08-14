@@ -100,33 +100,74 @@ module "ecr" {
 }
 
 # Provision S3 for frontend static web-hosting
-# locals {
-#   frontend_bucket_name = "networth-tracker-frontend"
-# }
+locals {
+  bucket_name = "networth-tracker-website"
+  region      = "ap-southeast-1"
+}
 
-# resource "aws_s3_bucket_website_configuration" "example" {
-#   bucket = local.frontend_bucket_name
+data "aws_iam_policy_document" "s3_frontend_bucket_policy" {
+  statement {
+    principals {
+      type        = "AWS"
+      identifiers = ["125905898704"]
+    }
 
-#   index_document {
-#     suffix = "index.html"
-#   }
+    actions = [ "s3:GetObject" ]
 
-#   error_document {
-#     key = "error.html"
-#   }
+    resources = [ module.s3_frontend_bucket.arn ]
+  }
+}
 
-#   routing_rule {
-#     condition {
-#       key_prefix_equals = "docs/"
-#     }
-#     redirect {
-#       replace_key_prefix_with = "documents/"
-#     }
-#   }
-  
-#   tags = {
-#     Terraform   = "true"
-#     Environment = "prod"
-#   }
-# }
+module "s3_frontend_bucket" {
+  source = "terraform-aws-modules/s3-bucket/aws"
+
+  bucket = local.bucket_name
+
+  force_destroy       = true
+
+  # Bucket policies
+  attach_policy                             = true
+  policy                                    = data.aws_iam_policy_document.s3_frontend_bucket_policy.json
+
+  # S3 bucket-level Public Access Block configuration (by default now AWS has made this default as true for S3 bucket-level block public access)
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+
+  versioning = {
+    status     = false
+    mfa_delete = false
+  }
+
+  tags = {
+    Terraform   = "true"
+    Environment = "prod"
+  }
+}
+
+resource "aws_s3_bucket_website_configuration" "s3_frontend_web_config" {
+  bucket = local.bucket_name
+
+  create_bucket = false
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "error.html"
+  }
+
+  routing_rule {
+    condition {
+      key_prefix_equals = "dist/"
+    }
+    redirect {
+      replace_key_prefix_with = "documents/"
+    }
+  }
+
+  depends_on = [ module.s3_frontend_bucket ]
+}
 
