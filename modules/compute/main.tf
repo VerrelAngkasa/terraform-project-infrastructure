@@ -1,6 +1,6 @@
 locals {
   backend_name          = "networth-tracker-backend"
-  image_uri             = "125905898704.dkr.ecr.ap-southeast-1.amazonaws.com/net-worth-tracker-gueh:be-latest"
+  image_uri             = "125905898704.dkr.ecr.ap-southeast-1.amazonaws.com/net-worth-tracker-gueh:be-1.0.6"
 
   backend_port          = var.backend_port
   backend_jwt_secret    = var.backend_jwt_secret

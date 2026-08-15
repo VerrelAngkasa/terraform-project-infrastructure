@@ -107,19 +107,22 @@ locals {
 
 data "aws_iam_policy_document" "s3_frontend_bucket_policy" {
   statement {
+    sid = "AllowPublicRead"
+
     principals {
-      type        = "AWS"
-      identifiers = ["125905898704"]
+      type        = "*"
+      identifiers = ["*"]
     }
 
     actions = [ "s3:GetObject" ]
 
-    resources = [ module.s3_frontend_bucket.arn ]
+    resources = [ "arn:aws:s3:::${local.bucket_name}/*" ]
   }
 }
 
 module "s3_frontend_bucket" {
   source = "terraform-aws-modules/s3-bucket/aws"
+  version = "~> 4.0"
 
   bucket = local.bucket_name
 
@@ -135,6 +138,19 @@ module "s3_frontend_bucket" {
   ignore_public_acls      = false
   restrict_public_buckets = false
 
+  website = {
+    index_document = "index.html"
+    error_document = "error.html"
+    # routing_rules = [{
+    #   condition = {
+    #     key_prefix_equals = "/"
+    #   }
+    #   redirect = {
+    #     replace_key_prefix_with = "dist/"
+    #   }
+    # }]
+  }
+
   versioning = {
     status     = false
     mfa_delete = false
@@ -145,29 +161,3 @@ module "s3_frontend_bucket" {
     Environment = "prod"
   }
 }
-
-resource "aws_s3_bucket_website_configuration" "s3_frontend_web_config" {
-  bucket = local.bucket_name
-
-  create_bucket = false
-
-  index_document {
-    suffix = "index.html"
-  }
-
-  error_document {
-    key = "error.html"
-  }
-
-  routing_rule {
-    condition {
-      key_prefix_equals = "dist/"
-    }
-    redirect {
-      replace_key_prefix_with = "documents/"
-    }
-  }
-
-  depends_on = [ module.s3_frontend_bucket ]
-}
-
