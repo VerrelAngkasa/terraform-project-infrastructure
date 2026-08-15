@@ -98,7 +98,7 @@ resource "aws_lambda_function_url" "backend_url" {
     allow_credentials = true
     allow_origins     = [local.backend_client_origin]
     allow_methods     = ["*"]
-    allow_headers     = ["Content-Type", "Authorization"]
+    allow_headers     = ["content-type", "authorization"]
     max_age           = 86400
   }
 }

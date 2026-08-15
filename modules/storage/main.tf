@@ -19,27 +19,37 @@ resource "aws_iam_policy" "github_actions_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Sid       = "AllowECRLogin"
-      Effect    = "Allow"
-      Action    = [ "ecr:GetAuthorizationToken" ]
-      Resource  = "*"
+      Sid      = "AllowECRLogin"
+      Effect   = "Allow"
+      Action   = "ecr:GetAuthorizationToken"
+      Resource = "*"
     }, 
     {
-      Sid       = "AllowECRAccess"
-      Effect    = "Allow"
-      Action    = [ "ecr:InitiateLayerUpload",
-                    "ecr:UploadLayerPart",
-                    "ecr:CompleteLayerUpload",
-                    "ecr:PutImage",
-                    "ecr:BatchGetImage",
-                    "ecr:BatchCheckLayerAvailability" ]
-      Resource  = module.ecr.repository_arn
+      Sid      = "AllowECRAccess"
+      Effect   = "Allow"
+      Action   = [ "ecr:InitiateLayerUpload",
+                   "ecr:UploadLayerPart",
+                   "ecr:CompleteLayerUpload",
+                   "ecr:PutImage",
+                   "ecr:BatchGetImage",
+                   "ecr:BatchCheckLayerAvailability" ]
+      Resource = module.ecr.repository_arn
     },
     {
-      Sid       = "AllowLambdaImageUpdate"
-      Effect    = "Allow"
-      Action    = [ "lambda:UpdateFunctionCode" ]
-      Resource  = var.lambda_backend_arn
+      Sid      = "AllowLambdaImageUpdate"
+      Effect   = "Allow"
+      Action   = [ "lambda:UpdateFunctionCode" ]
+      Resource = var.lambda_backend_arn
+    },
+    {
+      Sid      = "AllowS3Access"
+      Effect   = "Allow"
+      Action   = [ "s3:PutObject",
+                   "s3:GetObject",
+                   "s3:DeleteObject",
+                   "s3:ListBucket" ]
+      Resource = [ "arn:aws:s3:::${local.bucket_name}",
+                   "arn:aws:s3:::${local.bucket_name}/*" ]
     }]
   })
 
