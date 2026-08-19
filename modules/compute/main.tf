@@ -1,12 +1,6 @@
 locals {
   backend_name          = "networth-tracker-backend"
   image_uri             = "125905898704.dkr.ecr.ap-southeast-1.amazonaws.com/net-worth-tracker-gueh:be-1.0.6"
-
-  backend_port          = var.backend_port
-  backend_jwt_secret    = var.backend_jwt_secret
-  backend_node_env      = var.backend_node_env
-  backend_database_url  = var.backend_database_url
-  backend_client_origin = var.backend_client_origin
 }
 
 # Provision AWS Lambda function for hosting backend API
@@ -75,11 +69,11 @@ module "lambda_backend" {
   lambda_role = aws_iam_role.networth_backend_exec_role.arn
 
   environment_variables = {
-    PORT          = local.backend_port
-    JWT_SECRET    = local.backend_jwt_secret
-    NODE_ENV      = local.backend_node_env
-    DATABASE_URL  = local.backend_database_url
-    CLIENT_ORIGIN = local.backend_client_origin
+    PORT          = var.backend_port
+    JWT_SECRET    = var.backend_jwt_secret
+    NODE_ENV      = var.backend_node_env
+    DATABASE_URL  = var.backend_database_url
+    CLIENT_ORIGIN = var.backend_client_origin
   }
 
   depends_on = [ aws_iam_role_policy_attachment.networth_backend_role_attachment ]
@@ -96,9 +90,62 @@ resource "aws_lambda_function_url" "backend_url" {
 
   cors {
     allow_credentials = true
-    allow_origins     = [local.backend_client_origin]
+    allow_origins     = [var.backend_client_origin]
     allow_methods     = ["*"]
     allow_headers     = ["content-type", "authorization"]
     max_age           = 86400
   }
 }
+
+# module "cloudfront" {
+#   source = "terraform-aws-modules/cloudfront/aws"
+
+#   aliases = []
+#   comment             = "CloudFront distribution for frontend SPA (Single Page Application) and backend API"
+#   price_class         = "PriceClass_100" # Uses NA/Europe/Asia edge locations (lowest cost)
+#   default_root_object = "index.html"
+
+
+#   origin_access_control = {
+#     s3_frontend_oac = {
+#       description      = "CloudFront access to S3"
+#       origin_type      = "s3"
+#       signing_behavior = "always"
+#       signing_protocol = "sigv4"
+#     }
+#   }
+
+#   # Define the 2 Origins: S3 (Frontend) & Lambda Function URL (Backend)
+#   origin {
+#     domain_name = var.s3_bucket_domain_name
+#     origin_access_control = s3_frontend_oac
+#   }
+
+#   default_cache_behavior = {
+#     target_origin_id       = "something"
+#     viewer_protocol_policy = "allow-all"
+
+#     allowed_methods = ["GET", "HEAD", "OPTIONS"]
+#     cached_methods  = ["GET", "HEAD"]
+#     compress        = true
+#     query_string    = true
+#   }
+
+#   ordered_cache_behavior = [
+#     {
+#       path_pattern           = "/static/*"
+#       target_origin_id       = "s3"
+#       viewer_protocol_policy = "redirect-to-https"
+
+#       allowed_methods = ["GET", "HEAD", "OPTIONS"]
+#       cached_methods  = ["GET", "HEAD"]
+#       compress        = true
+#       query_string    = true
+#     }
+#   ]
+
+#   viewer_certificate = {
+#     acm_certificate_arn = "arn:aws:acm:us-east-1:135367859851:certificate/1032b155-22da-4ae0-9f69-e206f825458b"
+#     ssl_support_method  = "sni-only"
+#   }
+# }

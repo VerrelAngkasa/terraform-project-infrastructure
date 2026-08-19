@@ -32,6 +32,7 @@ module compute {
     source = "../../modules/compute"
 
     ecr_repository_arn    = module.storage.ecr_repository_arn
+    s3_bucket_domain_name = module.storage.s3_bucket_domain_name
 
     backend_port          = var.backend_port
     backend_jwt_secret    = var.backend_jwt_secret

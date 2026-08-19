@@ -8,3 +8,8 @@ output "api_endpoint" {
     value = module.compute.api_endpoint
     description = "The direct HTTPS endpoint URL for your Express backend"
 }
+
+output "s3_bucket_domain_name" {
+    value = module.storage.s3_bucket_domain_name
+    description = "The S3 bucket domain name for the frontend SPA"
+}
