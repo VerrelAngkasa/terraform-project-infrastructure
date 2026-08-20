@@ -86,19 +86,6 @@ module "ecr" {
         action = {
           type = "expire"
         }
-      },
-      {
-        rulePriority = 2,
-        description  = "Keep last 5 frontend images",
-        selection = {
-          tagStatus     = "tagged",
-          tagPrefixList = ["fe"],
-          countType     = "imageCountMoreThan",
-          countNumber   = 5
-        },
-        action = {
-          type = "expire"
-        }
       }
     ]
   })
@@ -117,16 +104,22 @@ locals {
 
 data "aws_iam_policy_document" "s3_frontend_bucket_policy" {
   statement {
-    sid = "AllowPublicRead"
+    sid = "AllowCloudFrontServicePrincipalReadOnly"
+    effect = "Allow"
 
     principals {
-      type        = "*"
-      identifiers = ["*"]
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
     }
 
     actions = [ "s3:GetObject" ]
-
     resources = [ "arn:aws:s3:::${local.bucket_name}/*" ]
+
+    condition {
+      test = "StringEquals"
+      variable = "AWS:SourceArn"
+      values = [ var.cloudfront_distribution_arn ]
+    }
   }
 }
 
@@ -142,11 +135,11 @@ module "s3_frontend_bucket" {
   attach_policy                             = true
   policy                                    = data.aws_iam_policy_document.s3_frontend_bucket_policy.json
 
-  # S3 bucket-level Public Access Block configuration (by default now AWS has made this default as true for S3 bucket-level block public access)
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
+  # Keep bucket completely private
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 
   website = {
     index_document = "index.html"

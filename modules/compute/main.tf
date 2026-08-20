@@ -1,6 +1,7 @@
 locals {
   backend_name          = "networth-tracker-backend"
   image_uri             = "125905898704.dkr.ecr.ap-southeast-1.amazonaws.com/net-worth-tracker-gueh:be-1.0.6"
+  lambda_domain_name    = replace(replace(aws_lambda_function_url.backend_url.function_url, "https://", ""), "/", "")
 }
 
 # Provision AWS Lambda function for hosting backend API
@@ -97,55 +98,98 @@ resource "aws_lambda_function_url" "backend_url" {
   }
 }
 
-# module "cloudfront" {
-#   source = "terraform-aws-modules/cloudfront/aws"
+# Provision CloudFront for route frontend and backend
+data "aws_cloudfront_cache_policy" "caching_optimized" {
+  name = "Managed-CachingOptimized"
+}
 
-#   aliases = []
-#   comment             = "CloudFront distribution for frontend SPA (Single Page Application) and backend API"
-#   price_class         = "PriceClass_100" # Uses NA/Europe/Asia edge locations (lowest cost)
-#   default_root_object = "index.html"
+data "aws_cloudfront_cache_policy" "caching_disabled" {
+  name = "Managed-CachingDisabled"
+}
 
+data "aws_cloudfront_origin_request_policy" "all_viewer_except_host" {
+  name = "Managed-AllViewerExceptHostHeader"
+}
 
-#   origin_access_control = {
-#     s3_frontend_oac = {
-#       description      = "CloudFront access to S3"
-#       origin_type      = "s3"
-#       signing_behavior = "always"
-#       signing_protocol = "sigv4"
-#     }
-#   }
+resource "aws_cloudfront_origin_access_control" "s3_oac" {
+  name = "s3_frontend_oac"
+  description = "OAC for CloudFront to access S3 frontend bucket"
+  origin_access_control_origin_type = "s3"
+  signing_behavior = "always"
+  signing_protocol = "sigv4"
+}
 
-#   # Define the 2 Origins: S3 (Frontend) & Lambda Function URL (Backend)
-#   origin {
-#     domain_name = var.s3_bucket_domain_name
-#     origin_access_control = s3_frontend_oac
-#   }
+module "cloudfront" {
+  source = "terraform-aws-modules/cloudfront/aws"
 
-#   default_cache_behavior = {
-#     target_origin_id       = "something"
-#     viewer_protocol_policy = "allow-all"
+  comment             = "CloudFront distribution for frontend SPA (Single Page Application) and backend API"
+  price_class         = "PriceClass_100" # Uses NA/Europe/Asia edge locations (lowest cost)
+  default_root_object = "index.html"
 
-#     allowed_methods = ["GET", "HEAD", "OPTIONS"]
-#     cached_methods  = ["GET", "HEAD"]
-#     compress        = true
-#     query_string    = true
-#   }
+  # Define the 2 Origins: S3 (Frontend) & Lambda Function URL (Backend)
+  origin = {
+    s3_frontend = {
+      domain_name = var.s3_bucket_domain_name
+      origin_access_control_id = aws_cloudfront_origin_access_control.s3_oac.id
+    }
 
-#   ordered_cache_behavior = [
-#     {
-#       path_pattern           = "/static/*"
-#       target_origin_id       = "s3"
-#       viewer_protocol_policy = "redirect-to-https"
+    lambda_backend = {
+      domain_name = local.lambda_domain_name
+      custom_origin_config = {
+        http_port = 80
+        https_port = 443
+        origin_protocol_policy = "https-only"
+        origin_ssl_protocols = ["TLSv1.2"]
+      }
+    }
+  }
 
-#       allowed_methods = ["GET", "HEAD", "OPTIONS"]
-#       cached_methods  = ["GET", "HEAD"]
-#       compress        = true
-#       query_string    = true
-#     }
-#   ]
+  # Default Behavior: /* -> Routes to S3 Frontend
+  default_cache_behavior = {
+    target_origin_id       = "s3_frontend"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods = ["GET", "HEAD", "OPTIONS"]
+    cached_methods  = ["GET", "HEAD"]
+    cache_policy_id = data.aws_cloudfront_cache_policy.caching_optimized.id
+    compress       = true
+  }
 
-#   viewer_certificate = {
-#     acm_certificate_arn = "arn:aws:acm:us-east-1:135367859851:certificate/1032b155-22da-4ae0-9f69-e206f825458b"
-#     ssl_support_method  = "sni-only"
-#   }
-# }
+  # Ordered Behavior: /api/* -> Routes to Lambda Function URL
+  ordered_cache_behavior = [
+    {
+      path_pattern           = "/api/*"
+      target_origin_id       = "lambda_backend"
+      viewer_protocol_policy = "redirect-to-https"
+      allowed_methods = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+      cached_methods  = ["GET", "HEAD"]
+      cache_policy_id = data.aws_cloudfront_cache_policy.caching_disabled.id
+      origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
+      compress        = true
+    }
+  ]
+
+  # SPA Routing Rewrites (React/Vue/Vite Router support)
+  custom_error_response = [
+     {
+      error_code = 403
+      response_code = 200
+      response_page_path = "/error.html"
+      error_caching_min_ttl = 0
+    },
+    {
+      error_code = 404
+      response_code = 200
+      response_page_path = "/error.html"
+      error_caching_min_ttl = 0
+    }
+  ]
+
+  viewer_certificate = {
+    cloudfront_default_certificate = true
+  }
+
+  tags = {
+    Terraform   = "true"
+    Environment = "prod"
+  }
+}

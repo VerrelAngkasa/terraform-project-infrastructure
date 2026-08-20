@@ -13,3 +13,8 @@ output "s3_bucket_domain_name" {
     value = module.storage.s3_bucket_domain_name
     description = "The S3 bucket domain name for the frontend SPA"
 }
+
+output "cloudfront_distribution_domain_name" {
+    value = module.compute.cloudfront_distribution_domain_name
+    description = "The domain name of the CloudFront distribution for the frontend SPA"
+}

@@ -24,8 +24,8 @@ module storage {
     source = "../../modules/storage"
 
     lambda_backend_arn = module.compute.lambda_backend_arn
-
     networth_backend_exec_role = module.compute.networth_backend_exec_role
+    cloudfront_distribution_arn = module.compute.cloudfront_distribution_arn
 }
 
 module compute {

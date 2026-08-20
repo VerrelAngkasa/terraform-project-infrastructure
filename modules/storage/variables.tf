@@ -6,3 +6,7 @@ variable "lambda_backend_arn" {
 variable "networth_backend_exec_role" {
     type = string
 }
+
+variable "cloudfront_distribution_arn" {
+    type = string
+}
