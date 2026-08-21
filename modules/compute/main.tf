@@ -28,20 +28,26 @@ resource "aws_iam_policy" "networth_backend_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Sid       = "AllowCloudWatchAccess"
-      Effect    = "Allow"
-      Action    = [ "logs:PutLogEvents",
-                    "logs:CreateLogStream",
-                    "logs:CreateLogGroup" ]
-      Resource  = "arn:aws:logs:*:*:*"
+      Sid      = "AllowCloudWatchAccess"
+      Effect   = "Allow"
+      Action   = [ "logs:PutLogEvents",
+                   "logs:CreateLogStream",
+                   "logs:CreateLogGroup" ]
+      Resource = "arn:aws:logs:*:*:*"
     },
     {
-      Sid       = "AllowECRPull"
-      Effect    = "Allow"
-      Action    = [ "ecr:BatchCheckLayerAvailability",
-                    "ecr:BatchGetImage",
-                    "ecr:GetDownloadUrlForLayer" ]
-      Resource  = var.ecr_repository_arn
+      Sid      = "AllowECRLogin"
+      Effect   = "Allow"
+      Action   = "ecr:GetAuthorizationToken"
+      Resource = "*"
+    },
+    {
+      Sid      = "AllowECRPull"
+      Effect   = "Allow"
+      Action   = [ "ecr:BatchCheckLayerAvailability",
+                   "ecr:BatchGetImage",
+                   "ecr:GetDownloadUrlForLayer" ]
+      Resource = var.ecr_repository_arn
     }]
   })
 }
@@ -186,6 +192,7 @@ module "cloudfront" {
 
   viewer_certificate = {
     cloudfront_default_certificate = true
+    minimum_protocol_version       = "TLSv1.2_2025"
   }
 
   tags = {
