@@ -18,6 +18,10 @@ variable "backend_client_origin" {
     type = string
 }
 
+variable "backend_api_endpoint" {
+    type = string
+}
+
 variable "s3_bucket_domain_name" {
     type = string
 }

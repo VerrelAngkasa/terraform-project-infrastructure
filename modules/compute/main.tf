@@ -67,6 +67,7 @@ module "lambda_backend" {
     NODE_ENV      = var.backend_node_env
     DATABASE_URL  = var.backend_database_url
     CLIENT_ORIGIN = var.backend_client_origin
+    API_ENDPOINT  = var.backend_api_endpoint
   }
 
   depends_on = [ aws_iam_role_policy_attachment.networth_backend_role_attachment ]

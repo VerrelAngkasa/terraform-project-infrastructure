@@ -31,3 +31,9 @@ variable "backend_client_origin" {
     description = "Client origin for CORS frontend"
     default     = "http://localhost:5173"
 }
+
+variable "backend_api_endpoint" {
+    type        = string
+    description = "API endpoint backend"
+    sensitive   = true
+}

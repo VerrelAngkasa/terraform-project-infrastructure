@@ -38,4 +38,5 @@ module compute {
     backend_node_env      = var.backend_node_env
     backend_database_url  = var.backend_database_url
     backend_client_origin = var.backend_client_origin
+    backend_api_endpoint  = var.backend_api_endpoint
 }
