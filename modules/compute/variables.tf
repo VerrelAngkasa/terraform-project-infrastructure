@@ -18,10 +18,6 @@ variable "backend_client_origin" {
     type = string
 }
 
-variable "ecr_repository_arn" {
-    type = string
-}
-
 variable "s3_bucket_domain_name" {
     type = string
 }

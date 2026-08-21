@@ -6,8 +6,8 @@ output "lambda_backend_arn" {
     value = module.lambda_backend.lambda_function_arn
 }
 
-output "networth_backend_exec_role" {
-    value = aws_iam_role.networth_backend_exec_role.arn
+output "networth_backend_lambda_role_arn" {
+    value = aws_iam_role.networth_backend_lambda_role.arn
 }
 
 output "cloudfront_distribution_arn" {

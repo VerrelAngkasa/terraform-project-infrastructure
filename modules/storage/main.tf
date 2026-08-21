@@ -25,17 +25,6 @@ resource "aws_iam_policy" "github_actions_policy" {
       Resource = "*"
     }, 
     {
-      Sid      = "AllowECRAccess"
-      Effect   = "Allow"
-      Action   = [ "ecr:InitiateLayerUpload",
-                   "ecr:UploadLayerPart",
-                   "ecr:CompleteLayerUpload",
-                   "ecr:PutImage",
-                   "ecr:BatchGetImage",
-                   "ecr:BatchCheckLayerAvailability" ]
-      Resource = module.ecr.repository_arn
-    },
-    {
       Sid      = "AllowLambdaImageUpdate"
       Effect   = "Allow"
       Action   = [ "lambda:UpdateFunctionCode" ]
@@ -65,13 +54,47 @@ resource "aws_iam_user_policy_attachment" "github_actions_policy_attachment" {
   policy_arn = aws_iam_policy.github_actions_policy.arn
 }
 
+data "aws_iam_policy_document" "ecr_repository_policy" {
+  statement {
+    sid = "LambdaECRImageRetrievalPolicy"
+    effect = "Allow"
+
+    principals {
+      type = "Service"
+      identifiers = [ "lambda.amazonaws.com" ]
+    }
+
+    actions = [ "ecr:BatchGetImage",
+                "ecr:GetDownloadUrlForLayer"]
+  }
+
+  statement {
+    sid = "AllowGitHubActionsAndLambdaRole"
+    effect = "Allow"
+
+    principals {
+      type = "AWS"
+      identifiers = [ aws_iam_user.github_actions.arn,
+                      var.networth_backend_lambda_role_arn ]
+    }
+
+    actions = [ "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:PutImage",
+                "ecr:InitiateLayerUpload",
+                "ecr:UploadLayerPart",
+                "ecr:CompleteLayerUpload" ]
+  }
+}
+
 module "ecr" {
   source = "terraform-aws-modules/ecr/aws"
 
   repository_name = "net-worth-tracker-gueh"
 
-  repository_read_write_access_arns = [ aws_iam_user.github_actions.arn ]
-  repository_read_access_arns       = [ var.networth_backend_exec_role ]
+  repository_policy = data.aws_iam_policy_document.ecr_repository_policy.json
+
   repository_lifecycle_policy = jsonencode({
     rules = [
       {
@@ -81,7 +104,7 @@ module "ecr" {
           tagStatus     = "tagged",
           tagPrefixList = ["be"],
           countType     = "imageCountMoreThan",
-          countNumber   = 5
+          countNumber   = 3
         },
         action = {
           type = "expire"

@@ -3,7 +3,7 @@ variable "lambda_backend_arn" {
     description = "The ARN of the backend Lambda function passed from compute module"
 }
 
-variable "networth_backend_exec_role" {
+variable "networth_backend_lambda_role_arn" {
     type = string
 }
 

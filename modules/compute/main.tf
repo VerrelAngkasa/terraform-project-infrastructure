@@ -5,8 +5,8 @@ locals {
 }
 
 # Provision AWS Lambda function for hosting backend API
-resource "aws_iam_role" "networth_backend_exec_role" {
-  name = "networth_backend_exec_role"
+resource "aws_iam_role" "networth_backend_lambda_role" {
+  name = "networth_backend_lambda_role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -34,26 +34,12 @@ resource "aws_iam_policy" "networth_backend_policy" {
                    "logs:CreateLogStream",
                    "logs:CreateLogGroup" ]
       Resource = "arn:aws:logs:*:*:*"
-    },
-    {
-      Sid      = "AllowECRLogin"
-      Effect   = "Allow"
-      Action   = "ecr:GetAuthorizationToken"
-      Resource = "*"
-    },
-    {
-      Sid      = "AllowECRPull"
-      Effect   = "Allow"
-      Action   = [ "ecr:BatchCheckLayerAvailability",
-                   "ecr:BatchGetImage",
-                   "ecr:GetDownloadUrlForLayer" ]
-      Resource = var.ecr_repository_arn
     }]
   })
 }
 
 resource "aws_iam_role_policy_attachment" "networth_backend_role_attachment" {
-  role      = aws_iam_role.networth_backend_exec_role.name
+  role      = aws_iam_role.networth_backend_lambda_role.name
   policy_arn = aws_iam_policy.networth_backend_policy.arn
 }
 
@@ -73,7 +59,7 @@ module "lambda_backend" {
   timeout     = 60
 
   create_role = false
-  lambda_role = aws_iam_role.networth_backend_exec_role.arn
+  lambda_role = aws_iam_role.networth_backend_lambda_role.arn
 
   environment_variables = {
     PORT          = var.backend_port
