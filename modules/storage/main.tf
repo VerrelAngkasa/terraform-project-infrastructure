@@ -23,7 +23,7 @@ resource "aws_iam_policy" "github_actions_policy" {
       Effect   = "Allow"
       Action   = "ecr:GetAuthorizationToken"
       Resource = "*"
-    }, 
+    },
     {
       Sid      = "AllowLambdaImageUpdate"
       Effect   = "Allow"
@@ -54,7 +54,7 @@ resource "aws_iam_user_policy_attachment" "github_actions_policy_attachment" {
   policy_arn = aws_iam_policy.github_actions_policy.arn
 }
 
-data "aws_iam_policy_document" "ecr_repository_policy" {
+data "aws_iam_policy_document" "ecr_policy" {
   statement {
     sid = "LambdaECRImageRetrievalPolicy"
     effect = "Allow"
@@ -65,7 +65,7 @@ data "aws_iam_policy_document" "ecr_repository_policy" {
     }
 
     actions = [ "ecr:BatchGetImage",
-                "ecr:GetDownloadUrlForLayer"]
+                "ecr:GetDownloadUrlForLayer" ]
   }
 
   statement {
@@ -88,12 +88,18 @@ data "aws_iam_policy_document" "ecr_repository_policy" {
   }
 }
 
+resource "aws_ecr_repository_policy" "ecr_repository_policy" {
+  repository = module.ecr.repository_name
+  policy     = data.aws_iam_policy_document.ecr_policy.json
+}
+
 module "ecr" {
   source = "terraform-aws-modules/ecr/aws"
 
   repository_name = "net-worth-tracker-gueh"
 
-  repository_policy = data.aws_iam_policy_document.ecr_repository_policy.json
+  create_repository_policy = false
+  attach_repository_policy = false
 
   repository_lifecycle_policy = jsonencode({
     rules = [
