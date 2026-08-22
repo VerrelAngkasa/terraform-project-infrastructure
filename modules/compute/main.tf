@@ -1,6 +1,6 @@
 locals {
   backend_name          = "networth-tracker-backend"
-  image_uri             = "125905898704.dkr.ecr.ap-southeast-1.amazonaws.com/net-worth-tracker-gueh:be-1.0.6"
+  image_uri             = "125905898704.dkr.ecr.ap-southeast-1.amazonaws.com/net-worth-tracker-gueh:be-1.1.1"
   lambda_domain_name    = replace(replace(aws_lambda_function_url.backend_url.function_url, "https://", ""), "/", "")
 }
 

@@ -39,6 +39,12 @@ resource "aws_iam_policy" "github_actions_policy" {
                    "s3:ListBucket" ]
       Resource = [ "arn:aws:s3:::${local.bucket_name}",
                    "arn:aws:s3:::${local.bucket_name}/*" ]
+    },
+    {
+      Sid      = "AllowCloudFrontInvalidation"
+      Effect   = "Allow"
+      Action   = [ "cloudfront:CreateInvalidation" ]
+      Resource = [ var.cloudfront_distribution_arn ]
     }]
   })
 
