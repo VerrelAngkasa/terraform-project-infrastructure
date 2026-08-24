@@ -12,8 +12,8 @@ resource "aws_iam_access_key" "github_actions_key" {
 }
 
 resource "aws_iam_policy" "github_actions_policy" {
-  name = "github-actions-policy"
-  path = "/"
+  name        = "github-actions-policy"
+  path        = "/"
   description = "Policy for GitHub actions to access ECR repository and update Lambda image tag version"
 
   policy = jsonencode({
@@ -56,17 +56,17 @@ resource "aws_iam_policy" "github_actions_policy" {
 }
 
 resource "aws_iam_user_policy_attachment" "github_actions_policy_attachment" {
-  user      = aws_iam_user.github_actions.name
+  user       = aws_iam_user.github_actions.name
   policy_arn = aws_iam_policy.github_actions_policy.arn
 }
 
 data "aws_iam_policy_document" "ecr_policy" {
   statement {
-    sid = "LambdaECRImageRetrievalPolicy"
+    sid    = "LambdaECRImageRetrievalPolicy"
     effect = "Allow"
 
     principals {
-      type = "Service"
+      type        = "Service"
       identifiers = [ "lambda.amazonaws.com" ]
     }
 
@@ -75,11 +75,11 @@ data "aws_iam_policy_document" "ecr_policy" {
   }
 
   statement {
-    sid = "AllowGitHubActionsAndLambdaRole"
+    sid    = "AllowGitHubActionsAndLambdaRole"
     effect = "Allow"
 
     principals {
-      type = "AWS"
+      type        = "AWS"
       identifiers = [ aws_iam_user.github_actions.arn,
                       var.networth_backend_lambda_role_arn ]
     }
@@ -139,7 +139,7 @@ locals {
 
 data "aws_iam_policy_document" "s3_frontend_bucket_policy" {
   statement {
-    sid = "AllowCloudFrontServicePrincipalReadOnly"
+    sid    = "AllowCloudFrontServicePrincipalReadOnly"
     effect = "Allow"
 
     principals {
@@ -147,28 +147,28 @@ data "aws_iam_policy_document" "s3_frontend_bucket_policy" {
       identifiers = ["cloudfront.amazonaws.com"]
     }
 
-    actions = [ "s3:GetObject" ]
+    actions   = [ "s3:GetObject" ]
     resources = [ "arn:aws:s3:::${local.bucket_name}/*" ]
 
     condition {
-      test = "StringEquals"
+      test     = "StringEquals"
       variable = "AWS:SourceArn"
-      values = [ var.cloudfront_distribution_arn ]
+      values   = [ var.cloudfront_distribution_arn ]
     }
   }
 }
 
 module "s3_frontend_bucket" {
-  source = "terraform-aws-modules/s3-bucket/aws"
+  source  = "terraform-aws-modules/s3-bucket/aws"
   version = "~> 4.0"
 
   bucket = local.bucket_name
 
-  force_destroy       = true
+  force_destroy = true
 
   # Bucket policies
-  attach_policy                             = true
-  policy                                    = data.aws_iam_policy_document.s3_frontend_bucket_policy.json
+  attach_policy = true
+  policy        = data.aws_iam_policy_document.s3_frontend_bucket_policy.json
 
   # Keep bucket completely private
   block_public_acls       = true
@@ -179,14 +179,6 @@ module "s3_frontend_bucket" {
   website = {
     index_document = "index.html"
     error_document = "error.html"
-    # routing_rules = [{
-    #   condition = {
-    #     key_prefix_equals = "/"
-    #   }
-    #   redirect = {
-    #     replace_key_prefix_with = "dist/"
-    #   }
-    # }]
   }
 
   versioning = {

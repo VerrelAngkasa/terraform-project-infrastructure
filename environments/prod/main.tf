@@ -3,15 +3,15 @@ terraform {
 
     required_providers {
         aws = {
-            source = "hashicorp/aws"
+            source  = "hashicorp/aws"
             version = "~> 6.28"
         }
     }
 
     backend s3 {
-        bucket = "terraform-project-infrastructure"
-        key    = "prod/networth-tracker.tfstate"
-        region = "ap-southeast-1"
+        bucket  = "terraform-project-infrastructure"
+        key     = "prod/networth-tracker.tfstate"
+        region  = "ap-southeast-1"
         encrypt = true
     }
 }
@@ -23,9 +23,9 @@ provider aws {
 module storage {
     source = "../../modules/storage"
 
-    lambda_backend_arn = module.compute.lambda_backend_arn
+    lambda_backend_arn               = module.compute.lambda_backend_arn
     networth_backend_lambda_role_arn = module.compute.networth_backend_lambda_role_arn
-    cloudfront_distribution_arn = module.compute.cloudfront_distribution_arn
+    cloudfront_distribution_arn      = module.compute.cloudfront_distribution_arn
 }
 
 module compute {

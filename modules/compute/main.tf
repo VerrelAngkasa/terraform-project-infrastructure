@@ -1,7 +1,7 @@
 locals {
-  backend_name          = "networth-tracker-backend"
-  image_uri             = "125905898704.dkr.ecr.ap-southeast-1.amazonaws.com/net-worth-tracker-gueh:be-1.1.1"
-  lambda_domain_name    = replace(replace(aws_lambda_function_url.backend_url.function_url, "https://", ""), "/", "")
+  backend_name       = "networth-tracker-backend"
+  image_uri          = "125905898704.dkr.ecr.ap-southeast-1.amazonaws.com/net-worth-tracker-gueh:be-1.1.1"
+  lambda_domain_name = replace(replace(aws_lambda_function_url.backend_url.function_url, "https://", ""), "/", "")
 }
 
 # Provision AWS Lambda function for hosting backend API
@@ -11,8 +11,8 @@ resource "aws_iam_role" "networth_backend_lambda_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
-      Action = "sts:AssumeRole"
+      Effect    = "Allow"
+      Action    = "sts:AssumeRole"
       Principal = {
         Service = "lambda.amazonaws.com"
       }
@@ -39,7 +39,7 @@ resource "aws_iam_policy" "networth_backend_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "networth_backend_role_attachment" {
-  role      = aws_iam_role.networth_backend_lambda_role.name
+  role       = aws_iam_role.networth_backend_lambda_role.name
   policy_arn = aws_iam_policy.networth_backend_policy.arn
 }
 
@@ -51,9 +51,9 @@ module "lambda_backend" {
 
   create_package = false
 
-  package_type = "Image"
-  architectures  = [ "x86_64" ]
-  image_uri    = local.image_uri
+  package_type  = "Image"
+  architectures = [ "x86_64" ]
+  image_uri     = local.image_uri
 
   memory_size = 512
   timeout     = 60
@@ -79,7 +79,7 @@ module "lambda_backend" {
 }
 
 resource "aws_lambda_function_url" "backend_url" {
-  function_name = module.lambda_backend.lambda_function_name
+  function_name      = module.lambda_backend.lambda_function_name
   authorization_type = "NONE"
 
   cors {
@@ -105,11 +105,11 @@ data "aws_cloudfront_origin_request_policy" "all_viewer_except_host" {
 }
 
 resource "aws_cloudfront_origin_access_control" "s3_oac" {
-  name = "s3_frontend_oac"
-  description = "OAC for CloudFront to access S3 frontend bucket"
+  name                              = "s3_frontend_oac"
+  description                       = "OAC for CloudFront to access S3 frontend bucket"
   origin_access_control_origin_type = "s3"
-  signing_behavior = "always"
-  signing_protocol = "sigv4"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
 }
 
 module "cloudfront" {
@@ -122,17 +122,17 @@ module "cloudfront" {
   # Define the 2 Origins: S3 (Frontend) & Lambda Function URL (Backend)
   origin = {
     s3_frontend = {
-      domain_name = var.s3_bucket_domain_name
+      domain_name              = var.s3_bucket_domain_name
       origin_access_control_id = aws_cloudfront_origin_access_control.s3_oac.id
     }
 
     lambda_backend = {
       domain_name = local.lambda_domain_name
       custom_origin_config = {
-        http_port = 80
-        https_port = 443
+        http_port              = 80
+        https_port             = 443
         origin_protocol_policy = "https-only"
-        origin_ssl_protocols = ["TLSv1.2"]
+        origin_ssl_protocols   = ["TLSv1.2"]
       }
     }
   }
@@ -141,38 +141,38 @@ module "cloudfront" {
   default_cache_behavior = {
     target_origin_id       = "s3_frontend"
     viewer_protocol_policy = "redirect-to-https"
-    allowed_methods = ["GET", "HEAD", "OPTIONS"]
-    cached_methods  = ["GET", "HEAD"]
-    cache_policy_id = data.aws_cloudfront_cache_policy.caching_optimized.id
-    compress       = true
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    cache_policy_id        = data.aws_cloudfront_cache_policy.caching_optimized.id
+    compress               = true
   }
 
   # Ordered Behavior: /api/* -> Routes to Lambda Function URL
   ordered_cache_behavior = [
     {
-      path_pattern           = "/api/*"
-      target_origin_id       = "lambda_backend"
-      viewer_protocol_policy = "redirect-to-https"
-      allowed_methods = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-      cached_methods  = ["GET", "HEAD"]
-      cache_policy_id = data.aws_cloudfront_cache_policy.caching_disabled.id
+      path_pattern             = "/api/*"
+      target_origin_id         = "lambda_backend"
+      viewer_protocol_policy   = "redirect-to-https"
+      allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+      cached_methods           = ["GET", "HEAD"]
+      cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
       origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
-      compress        = true
+      compress                 = true
     }
   ]
 
   # SPA Routing Rewrites (React/Vue/Vite Router support)
   custom_error_response = [
      {
-      error_code = 403
-      response_code = 200
-      response_page_path = "/error.html"
+      error_code            = 403
+      response_code         = 200
+      response_page_path    = "/error.html"
       error_caching_min_ttl = 0
     },
     {
-      error_code = 404
-      response_code = 200
-      response_page_path = "/error.html"
+      error_code            = 404
+      response_code         = 200
+      response_page_path    = "/error.html"
       error_caching_min_ttl = 0
     }
   ]
